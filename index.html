@@ -1212,14 +1212,17 @@ window.addEventListener('scroll', () => { updatePlane(); updateParallax(); updat
      المفاتيح ديال Firebase ديالك مزادين هنا. إلا بغيتي تبدل المشروع،
      بدل الأرقام فـ firebaseConfig بالأرقام الجداد.
      ============================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
   import {
     getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile
+    signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile,
+    getAdditionalUserInfo
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
-    getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp
+    getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
+    doc, runTransaction
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -1236,6 +1239,50 @@ window.addEventListener('scroll', () => { updatePlane(); updateParallax(); updat
   const auth = getAuth(app);
   const db = getFirestore(app);
   let currentUser = null;
+
+  // ===== welcome email (EmailJS), limited to the first 11 signups =====
+  const EMAILJS_PUBLIC_KEY = "2J48vQL0zUk73hkEk";
+  const EMAILJS_SERVICE_ID = "service_xtofd3r";
+  const EMAILJS_TEMPLATE_ID = "template_yag2ptb";
+  const WELCOME_EMAIL_LIMIT = 11;
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+
+  function welcomeMessage(name){
+    const lang = (navigator.language || 'ar').slice(0,2).toLowerCase();
+    const messages = {
+      ar: `مرحبا بيك ${name} في عالمنا، فرحانين بيك معانا فرؤية أنس! غادي تكتشف معانا قصص، تاريخ، وأفكار كتثير الفضول. شكرا على التسجيل.`,
+      fr: `Bienvenue ${name} dans notre monde ! Ravis de t'accueillir sur Anass Vision. Tu vas découvrir avec nous des histoires, de l'histoire et des idées passionnantes. Merci de nous avoir rejoint.`,
+      en: `Welcome ${name} to our world! We're thrilled to have you join Anass Vision. Get ready to explore stories, history, and ideas that spark curiosity. Thanks for signing up.`,
+    };
+    return messages[lang] || messages.ar;
+  }
+
+  async function tryReserveEmailSlot(){
+    const counterRef = doc(db, 'meta', 'signupEmailCounter');
+    try{
+      return await runTransaction(db, async (tx) => {
+        const snap = await tx.get(counterRef);
+        const count = snap.exists() ? (snap.data().count || 0) : 0;
+        if(count >= WELCOME_EMAIL_LIMIT) return false;
+        tx.set(counterRef, { count: count + 1 }, { merge: true });
+        return true;
+      });
+    }catch(err){ console.warn('تعذر التحقق من عداد الإيميلات', err); return false; }
+  }
+
+  async function sendWelcomeEmail(user){
+    if(!user?.email) return;
+    const allowed = await tryReserveEmailSlot();
+    if(!allowed){ console.info('توصلنا للحد الأقصى (11) ديال إيميلات الترحيب، ماغاديش يتصيفط.'); return; }
+    const name = user.displayName || user.email.split('@')[0];
+    try{
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_name: name,
+        to_email: user.email,
+        message: welcomeMessage(name)
+      });
+    }catch(err){ console.warn('تعذر إرسال إيميل الترحيب', err); }
+  }
 
   // ===== auth modal open/close + tabs =====
   const authOverlay = document.getElementById('authModalOverlay');
@@ -1282,6 +1329,7 @@ window.addEventListener('scroll', () => { updatePlane(); updateParallax(); updat
         const name = authName.value.trim() || 'زائر';
         const cred = await createUserWithEmailAndPassword(auth, email, pass);
         await updateProfile(cred.user, { displayName: name });
+        sendWelcomeEmail({ ...cred.user, displayName: name });
       } else {
         await signInWithEmailAndPassword(auth, email, pass);
       }
@@ -1292,7 +1340,12 @@ window.addEventListener('scroll', () => { updatePlane(); updateParallax(); updat
   });
 
   authGoogleBtn.addEventListener('click', async () => {
-    try{ await signInWithPopup(auth, new GoogleAuthProvider()); closeAuthModal(); }
+    try{
+      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      const info = getAdditionalUserInfo(result);
+      if(info?.isNewUser) sendWelcomeEmail(result.user);
+      closeAuthModal();
+    }
     catch(err){ authError.textContent = 'خطأ: ' + (err.code || err.message); }
   });
 
