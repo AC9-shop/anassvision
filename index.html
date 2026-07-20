@@ -1051,14 +1051,7 @@ document.getElementById('shareSiteBtn').addEventListener('click', () => {
   else{ navigator.clipboard?.writeText(location.href); alert('تم نسخ رابط الموقع ✓'); }
 });
 
-let liveBase = 30 + Math.floor(Math.random()*40);
-function updateLiveCounter(){
-  document.getElementById('liveCount').textContent = `${liveBase} كيتصفحو الموقع دابا`;
-  if(Math.random() < 0.5) liveBase += Math.random() < 0.5 ? 1 : -1;
-  liveBase = Math.max(12, liveBase);
-}
-updateLiveCounter();
-setInterval(updateLiveCounter, 4000);
+// عداد الزوار الحقيقي (Firestore) موجود دابا فـ script الخاص بـ Firebase تحت.
 
 function checkNewEpisodeBadge(list){
   try{
@@ -1221,8 +1214,8 @@ window.addEventListener('scroll', () => { updatePlane(); updateParallax(); updat
     getAdditionalUserInfo
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
-    getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
-    doc, runTransaction
+    getFirestore, collection, addDoc, deleteDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
+    doc, runTransaction, setDoc, getCountFromServer, where, Timestamp
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -1363,6 +1356,7 @@ window.addEventListener('scroll', () => { updatePlane(); updateParallax(); updat
     document.getElementById('authOpenBtn').addEventListener('click', () => {
       if(currentUser){ signOut(auth); } else { openAuthModal(); }
     });
+    if(lastCommentsSnapshot) renderComments(lastCommentsSnapshot);
   });
 
   // ===== real comments (Firestore) on the About page =====
@@ -1376,24 +1370,34 @@ window.addEventListener('scroll', () => { updatePlane(); updateParallax(); updat
       commentsList.innerHTML = `<div class="empty-note">مازال حتى تعليق. كون أول واحد يعلق!</div>`;
       return;
     }
-    commentsList.innerHTML = snapshot.docs.map(doc => {
-      const c = doc.data();
+    commentsList.innerHTML = snapshot.docs.map(docSnap => {
+      const c = docSnap.data();
       const initial = (c.name || '؟').trim().charAt(0);
       const date = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleDateString('ar-MA') : '';
+      const canDelete = currentUser && c.uid === currentUser.uid;
       return `
-        <div class="testi-card">
+        <div class="testi-card" data-comment-id="${docSnap.id}">
           <div class="who" style="margin-bottom:10px;">
             <div class="avatar">${initial}</div>
             <span>${c.name || 'زائر'}</span>
             <span style="font-size:0.75rem; color:var(--cream-dim); margin-right:auto;">${date}</span>
+            ${canDelete ? `<button class="icon-btn" data-delete-comment="${docSnap.id}" title="حذف" style="width:26px;height:26px;font-size:0.75rem;">🗑</button>` : ''}
           </div>
           <p style="margin-bottom:0;">${c.text}</p>
         </div>`;
     }).join('');
+    commentsList.querySelectorAll('[data-delete-comment]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if(!confirm('واش متأكد بغيتي تحذف التعليق؟')) return;
+        try{ await deleteDoc(doc(db, 'comments', btn.dataset.deleteComment)); }
+        catch(err){ alert('تعذر الحذف: ' + err.code); }
+      });
+    });
   }
 
   const commentsQuery = query(commentsCol, orderBy('createdAt', 'desc'), limit(50));
-  onSnapshot(commentsQuery, renderComments, (err) => {
+  let lastCommentsSnapshot = null;
+  onSnapshot(commentsQuery, (snap) => { lastCommentsSnapshot = snap; renderComments(snap); }, (err) => {
     commentsList.innerHTML = `<div class="empty-note">تعذر تحميل التعليقات (${err.code}). تأكد من قواعد Firestore.</div>`;
   });
 
@@ -1413,6 +1417,31 @@ window.addEventListener('scroll', () => { updatePlane(); updateParallax(); updat
       alert('تعذر إرسال التعليق: ' + err.code);
     }
   });
+
+  // ===== real live visitor counter (Firestore presence) =====
+  const PRESENCE_WINDOW_MS = 45000; // كيتحسب "نشيط" إلا صيفط heartbeat خلال آخر 45 ثانية
+  let sessionId = sessionStorage.getItem('av-session-id');
+  if(!sessionId){ sessionId = crypto.randomUUID(); sessionStorage.setItem('av-session-id', sessionId); }
+  const presenceRef = doc(db, 'presence', sessionId);
+
+  async function beatPresence(){
+    try{ await setDoc(presenceRef, { lastSeen: serverTimestamp() }); }
+    catch(err){ console.warn('presence heartbeat failed', err); }
+  }
+  async function refreshLiveCount(){
+    try{
+      const cutoff = Timestamp.fromMillis(Date.now() - PRESENCE_WINDOW_MS);
+      const q = query(collection(db, 'presence'), where('lastSeen', '>', cutoff));
+      const snap = await getCountFromServer(q);
+      const n = snap.data().count;
+      const el = document.getElementById('liveCount');
+      if(el) el.textContent = `${Math.max(n,1)} كيتصفحو الموقع دابا`;
+    }catch(err){ console.warn('تعذر جلب عدد الزوار الحقيقي', err); }
+  }
+  beatPresence();
+  refreshLiveCount();
+  setInterval(beatPresence, 20000);
+  setInterval(refreshLiveCount, 15000);
 </script>
 
 </body>
