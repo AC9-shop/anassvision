@@ -1222,6 +1222,8 @@ function renderSubscriptionBanner(containerId){
     });
   });
 }
+
+function renderSiteVideos(){
   const grid = document.getElementById('videoGrid');
   const withSrc = siteVideos.filter(v => v.src);
   if(!withSrc.length){ grid.innerHTML = `<div class="empty-note">${T('videosEmptyNote')}</div>`; return; }
@@ -1521,7 +1523,7 @@ document.querySelector('[data-page="episodes"]').addEventListener('click', () =>
    ============================================================ */
 const seriesList = [
   {
- name: "حكاية قبل الإفطار",
+   name: "حكاية قبل الإفطار",
 
 
 
