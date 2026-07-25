@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" type="image/png" href="3.png">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>رؤيـة أنس | Anass Vision</title>
 <meta name="description" content="رؤيـة أنس: قناة تأخذكم في رحلة عبر القصص والتاريخ والأفكار المتنوعة.">
@@ -267,6 +266,43 @@
 
   .ep-card.video-card{ cursor:default; }
   .ep-card.video-card video{ width:100%; height:180px; object-fit:cover; display:block; background:var(--bg-deep); }
+  .video-gate-wrap{ position:relative; }
+  .paywall-overlay{
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; padding:20px; text-align:center; background:var(--bg-deep); border-top:1px solid var(--line);
+  }
+  .paywall-overlay.show{ display:flex; }
+  .paywall-overlay p{ color:var(--cream-dim); font-size:0.85rem; max-width:260px; margin:0; }
+  .paywall-options{ display:flex; gap:8px; flex-wrap:wrap; justify-content:center; width:100%; }
+  .paywall-btn{
+    display:flex; flex-direction:column; align-items:center; gap:2px; padding:10px 16px; border-radius:12px;
+    border:1px solid var(--gold); background:rgba(205,161,90,0.08); color:var(--gold-light); cursor:pointer;
+    font-family:'Cairo',sans-serif; font-size:0.8rem; font-weight:700; transition:transform .2s ease, background .2s ease;
+  }
+  .paywall-btn:hover{ transform:translateY(-3px); background:rgba(205,161,90,0.18); }
+  .paywall-btn small{ font-weight:400; font-size:0.7rem; color:var(--cream-dim); }
+  .paypal-panel{ width:100%; max-width:260px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; }
+  .paypal-panel:empty{ display:none; padding:0; border:none; }
+  .paypal-panel-close{ display:block; margin:0 auto 10px; background:none; border:none; color:var(--cream-dim); font-size:0.78rem; cursor:pointer; }
+  .paypal-panel-price{ text-align:center; color:var(--gold-light); font-size:0.9rem; margin-bottom:10px; }
+  .unlocked-note{ color:var(--teal); font-size:0.8rem; }
+  .rating-widget{ display:flex; align-items:center; gap:6px; padding:0 18px 14px; }
+  .rating-stars{ display:flex; gap:2px; cursor:pointer; }
+  .rating-stars span{ font-size:1rem; color:var(--line); transition:color .15s ease; }
+  .rating-stars span.filled{ color:var(--gold); }
+  .rating-widget .rating-info{ font-size:0.75rem; color:var(--cream-dim); }
+  .sub-banner{ background:linear-gradient(160deg, var(--panel), var(--panel-2)); border:1px solid var(--gold);
+    border-radius:18px; padding:22px 26px; display:flex; align-items:center; justify-content:space-between;
+    gap:16px; flex-wrap:wrap; }
+  .sub-banner h4{ color:var(--gold-light); font-size:1.05rem; margin-bottom:4px; }
+  .sub-banner p{ color:var(--cream-dim); font-size:0.85rem; margin:0; }
+  .sub-banner .paypal-panel{ max-width:220px; }
+  .download-btn-row{ padding:12px 18px 0; }
+  .download-gate-btn{
+    width:100%; padding:10px; border-radius:10px; border:1px dashed var(--line); background:transparent;
+    color:var(--cream-dim); font-family:'Cairo',sans-serif; font-size:0.85rem; cursor:pointer; transition:border-color .2s ease, color .2s ease;
+  }
+  .download-gate-btn:hover{ border-color:var(--gold); color:var(--gold-light); }
   .ep-cta{ text-align:center; margin-top:36px; }
   .empty-note{ color:var(--cream-dim); border:1px dashed var(--line); border-radius:16px; padding:28px;
     text-align:center; font-size:0.92rem; line-height:1.8; grid-column:1/-1; }
@@ -389,6 +425,17 @@
 </div>
 
 <!-- auth modal -->
+<!-- watch later modal -->
+<div id="watchLaterOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:900; display:none; align-items:center; justify-content:center; padding:20px;">
+  <div style="background:var(--panel); border:1px solid var(--line); border-radius:18px; max-width:420px; width:100%; max-height:80vh; overflow-y:auto; padding:26px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+      <h3 style="color:var(--gold-light); font-size:1.2rem;">🔖 شاهد لاحقا</h3>
+      <button class="icon-btn" id="watchLaterClose">✕</button>
+    </div>
+    <div id="watchLaterList"></div>
+  </div>
+</div>
+
 <div id="authModalOverlay" style="position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:900; display:none; align-items:center; justify-content:center; padding:20px;">
   <div id="authModal" style="background:var(--panel); border:1px solid var(--line); border-radius:18px; max-width:380px; width:100%; padding:30px;">
     <div style="display:flex; justify-content:flex-end;"><button class="icon-btn" id="authModalClose">✕</button></div>
@@ -421,6 +468,7 @@
       <a data-page="episodes" style="position:relative;" data-i18n="navEpisodes">الحلقات<span class="nav-dot" id="newEpBadge" style="display:none;"></span></a>
       <a data-page="videos" data-i18n="navVideos">فيديوهات</a>
       <a data-page="about" data-i18n="navAbout">من أنا</a>
+      <a data-page="series" data-i18n="navSeries">السلاسل</a>
       <a data-page="faq" data-i18n="navFaq">الأسئلة الشائعة</a>
     </nav>
     <div class="nav-right">
@@ -430,6 +478,8 @@
         <button data-lang="en">EN</button>
       </div>
       <div id="authArea"><button class="icon-btn" id="authOpenBtn" title="تسجيل الدخول">👤</button></div>
+      <button class="icon-btn" id="referralBtn" title="رابط الإحالة">🎁</button>
+      <button class="icon-btn" id="watchLaterBtn" title="شاهد لاحقا">🔖</button>
       <button class="icon-btn" id="shareSiteBtn" title="شارك الموقع">🔗</button>
       <button class="icon-btn" id="themeToggle" title="بدل المظهر">🌙</button>
       <a class="nav-cta" href="https://www.youtube.com/channel/UCzPGTjQSHJmgtR3Mdohu_Yw" target="_blank" rel="noopener" data-i18n="navSubscribe">اشترك الآن</a>
@@ -566,6 +616,7 @@
         <button class="action-btn" id="surpriseBtn" data-i18n="surpriseBtnText">✨ فاجئني</button>
       </div>
 
+      <div class="archive-row" id="seriesRow"></div>
       <div class="archive-row" id="archiveRow"></div>
 
       <div class="filter-bar">
@@ -597,7 +648,10 @@
       <p data-i18n="vidPageText">مقاطع فيديو موجودة هنا فقط، ماشي على يوتيوب.</p>
     </div>
     <div class="route-divider"></div>
-    <section><div class="ep-grid" id="videoGrid"></div></section>
+    <section>
+      <div id="subBanner" style="margin-bottom:36px;"></div>
+      <div class="ep-grid" id="videoGrid"></div>
+    </section>
   </main>
   <footer>
     <div class="wrap">
@@ -655,6 +709,31 @@
   </footer>
 </div>
 
+<div class="page" id="page-series">
+  <main class="wrap">
+    <div class="page-hero">
+      <p class="eyebrow" data-i18n="seriesPageEyebrow">مجموعات مختارة</p><h1 data-i18n="seriesPageTitle">السلاسل</h1>
+      <p data-i18n="seriesPageText">حلقات مجمّعة حسب الموضوع، سلسلة سلسلة.</p>
+    </div>
+    <div class="route-divider"></div>
+    <section>
+      <div id="subBannerSeries" style="margin-bottom:36px;"></div>
+      <div id="seriesPageList"></div>
+    </section>
+  </main>
+  <footer>
+    <div class="wrap">
+      <div class="mark-big"><img src="3.png" alt="Anass"></div>
+      <h3 data-i18n="footerJoin">انضم إلى الرحلة</h3>
+      <div class="social-row">
+        <a href="https://www.youtube.com/channel/UCzPGTjQSHJmgtR3Mdohu_Yw" target="_blank" rel="noopener" data-i18n="footerYoutube">يوتيوب</a>
+        <a href="https://www.instagram.com/anass_vision_/" target="_blank" rel="noopener" data-i18n="footerInstagram">انستغرام</a>
+      </div>
+      <p class="fine">© رؤيـة أنس — Anass Vision</p>
+    </div>
+  </footer>
+</div>
+
 <div class="page" id="page-faq">
   <main class="wrap">
     <div class="page-hero">
@@ -678,15 +757,36 @@
 </div>
 
 <script>
+/* ============================================================
+   الحلقات ديال يوتيوب — زيد/بدل هنا فقط.
+   series (اختياري): سمي السلسلة إلا الحلقة كتبع لسلسلة معينة
+   (مثلا "تاريخ المغرب"، "حروب القرن 20"...). خليها فارغة/محيدة
+   إلا الحلقة ماشي جزء من سلسلة.
+   ============================================================ */
 const episodes = [
-  { id: "U7a6rKEExXI", title: "عنوان الحلقة الأولى", category: "تاريخ", date: "2026-06-01", featured: true },
-  { id: "XXXXXXXXXXX", title: "عنوان الحلقة الثانية", category: "قصص", date: "2026-06-08", featured: true },
-  { id: "XXXXXXXXXXX", title: "عنوان الحلقة الثالثة", category: "تحليل", date: "2026-06-15", featured: false },
-  { id: "XXXXXXXXXXX", title: "عنوان الحلقة الرابعة", category: "مستجدات", date: "2026-06-22", featured: false },
+  { id: "U7a6rKEExXI", title: "عنوان الحلقة الأولى", category: "تاريخ", date: "2026-06-01", featured: true, series: "" },
+  { id: "XXXXXXXXXXX", title: "عنوان الحلقة الثانية", category: "قصص", date: "2026-06-08", featured: true, series: "" },
+  { id: "XXXXXXXXXXX", title: "عنوان الحلقة الثالثة", category: "تحليل", date: "2026-06-15", featured: false, series: "" },
+  { id: "XXXXXXXXXXX", title: "عنوان الحلقة الرابعة", category: "مستجدات", date: "2026-06-22", featured: false, series: "" },
 ];
 
+/* ============================================================
+   فيديوهات الموقع + نظام الخلاص:
+   src            : رابط الفيديو
+   poster         : صورة قبل التشغيل (اختياري)
+   title, category: عنوان وتصنيف
+   free           : true إلا بغيتي الفيديو يكون مجاني بالكامل (مشاهدة + تحميل بلا خلاص).
+                    فهاد الحالة، previewSeconds/priceWatch/priceDownload/priceBoth ماخدمينش.
+   previewSeconds : شحال ثانية تخلي مجانية قبل ما يوقف الفيديو ويطلع popup الخلاص
+                    (حطها 0 إلا بغيتي الفيديو يكون مقفول من البداية، وماشي مجاني)
+   priceWatch     : ثمن المشاهدة فقط (بالدرهم)
+   priceDownload  : ثمن التحميل فقط
+   priceBoth      : ثمن مشاهدة + تحميل بجوج
+   ============================================================ */
 const siteVideos = [
-  { src: "", poster: "2.jpg", title: "", category: "حصري" },
+  { src: "", poster: "2.jpg", title: "", category: "حصري", previewSeconds: 30, priceWatch: 10, priceDownload: 20, priceBoth: 30 },
+  // مثال فيديو مجاني بالكامل:
+  // { src: "videos/free-clip.mp4", poster: "", title: "فيديو مجاني", category: "مجاني", free: true },
 ];
 
 const testimonials = [
@@ -738,8 +838,10 @@ let activeEpisodes = episodes;
 let activeCategory = "الكل";
 let activeSearch = "";
 let activeArchive = null;
+let activeSeries = null;
 let currentLang = 'ar';
 function pick(obj){ if(typeof obj === 'string') return obj; return (obj && (obj[currentLang] || obj.ar)) || ''; }
+function T(key){ try{ return (i18n[key] && (i18n[key][currentLang] || i18n[key].ar)) || key; }catch(e){ return key; } }
 
 function formatDate(iso){
   if(!iso) return "";
@@ -772,6 +874,47 @@ function toggleLike(id){
 }
 function isLiked(id){ return !!getLikes()[id]; }
 
+/* ===== شاهد لاحقا (Watch Later) ===== */
+function getWatchLater(){ try{ return JSON.parse(localStorage.getItem('av-watch-later')||'[]'); }catch(e){ return []; } }
+function isInWatchLater(id){ return getWatchLater().some(x => x.id === id); }
+function toggleWatchLater(id, title, kind){
+  let list = getWatchLater();
+  const exists = list.some(x => x.id === id);
+  if(exists){ list = list.filter(x => x.id !== id); }
+  else{ list.push({ id, title, kind }); }
+  try{ localStorage.setItem('av-watch-later', JSON.stringify(list)); }catch(e){}
+  renderWatchLaterList();
+  return !exists;
+}
+function renderWatchLaterList(){
+  const el = document.getElementById('watchLaterList');
+  if(!el) return;
+  const list = getWatchLater();
+  if(!list.length){ el.innerHTML = `<div class="empty-note">مازال ماحطيتي حتى فيديو "شاهد لاحقا". اضغط 🔖 فوق أي حلقة باش تزيدها.</div>`; return; }
+  el.innerHTML = list.map(item => `
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);">
+      <span style="font-size:0.9rem; color:var(--cream);">${item.title || item.id}</span>
+      <div style="display:flex; gap:6px;">
+        ${item.kind === 'youtube' ? `<button class="icon-btn" data-open-wl="${item.id}" title="شاهد">▶</button>` : ''}
+        <button class="icon-btn" data-remove-wl="${item.id}" title="حذف">🗑</button>
+      </div>
+    </div>
+  `).join('');
+  el.querySelectorAll('[data-open-wl]').forEach(btn => {
+    btn.addEventListener('click', () => { document.getElementById('watchLaterOverlay').style.display = 'none'; openEpisodeModal(btn.dataset.openWl); });
+  });
+  el.querySelectorAll('[data-remove-wl]').forEach(btn => {
+    btn.addEventListener('click', () => { toggleWatchLater(btn.dataset.removeWl); });
+  });
+}
+document.getElementById('watchLaterBtn').addEventListener('click', () => {
+  renderWatchLaterList();
+  document.getElementById('watchLaterOverlay').style.display = 'flex';
+});
+document.getElementById('watchLaterClose').addEventListener('click', () => {
+  document.getElementById('watchLaterOverlay').style.display = 'none';
+});
+
 function getWatched(){ try{ return JSON.parse(localStorage.getItem('av-watched')||'[]'); }catch(e){ return []; } }
 function markWatched(id){
   const w = getWatched();
@@ -798,6 +941,17 @@ function renderArchive(){
   });
 }
 
+function renderSeries(){
+  const row = document.getElementById('seriesRow');
+  const seriesList = [...new Set(activeEpisodes.map(e => e.series).filter(Boolean))];
+  if(!seriesList.length){ row.innerHTML=''; return; }
+  row.innerHTML = `<button class="archive-chip ${!activeSeries?'active':''}" data-s="">🎞 كل السلاسل</button>` +
+    seriesList.map(s => `<button class="archive-chip ${activeSeries===s?'active':''}" data-s="${s}">🎞 ${s}</button>`).join('');
+  row.querySelectorAll('[data-s]').forEach(btn => {
+    btn.addEventListener('click', () => { activeSeries = btn.dataset.s || null; renderSeries(); renderEpisodes(); });
+  });
+}
+
 function renderFeatured(){
   const strip = document.getElementById('featuredStrip');
   const featured = activeEpisodes.filter(e => e.featured);
@@ -821,11 +975,13 @@ function showSkeletons(gridId, count){
 function episodeCardHTML(v){
   const s = shareUrls(v);
   const liked = isLiked(v.id);
+  const saved = isInWatchLater(v.id);
   return `
     <div class="ep-card" data-open="${v.id}">
       <div class="ep-thumb">
         <span class="ep-tag">${v.category}</span>
         <button class="like-btn ${liked?'liked':''}" data-like="${v.id}">❤</button>
+        <button class="like-btn ${saved?'liked':''}" data-watch-later="${v.id}" data-title="${(v.title||'').replace(/"/g,'&quot;')}" style="left:auto; right:10px;">🔖</button>
         <img src="https://img.youtube.com/vi/${v.id}/hqdefault.jpg" alt="${v.title}" loading="lazy">
         <div class="play">▶</div>
       </div>
@@ -846,7 +1002,7 @@ function episodeCardHTML(v){
 function wireEpisodeCards(container){
   container.querySelectorAll('[data-open]').forEach(el => {
     el.addEventListener('click', (e) => {
-      if(e.target.closest('[data-like]') || e.target.closest('[data-copy]') || e.target.closest('a')) return;
+      if(e.target.closest('[data-like]') || e.target.closest('[data-copy]') || e.target.closest('[data-watch-later]') || e.target.closest('a')) return;
       openEpisodeModal(el.dataset.open);
     });
   });
@@ -855,6 +1011,13 @@ function wireEpisodeCards(container){
       e.stopPropagation();
       const liked = toggleLike(btn.dataset.like);
       btn.classList.toggle('liked', liked);
+    });
+  });
+  container.querySelectorAll('[data-watch-later]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const saved = toggleWatchLater(btn.dataset.watchLater, btn.dataset.title, 'youtube');
+      btn.classList.toggle('liked', saved);
     });
   });
   container.querySelectorAll('[data-copy]').forEach(btn => {
@@ -872,6 +1035,7 @@ function renderEpisodes(){
   let list = activeEpisodes;
   if(activeCategory !== "الكل") list = list.filter(e => e.category === activeCategory);
   if(activeArchive) list = list.filter(e => monthKey(e.date) === activeArchive);
+  if(activeSeries) list = list.filter(e => e.series === activeSeries);
   if(activeSearch.trim()) list = list.filter(e => e.title.includes(activeSearch.trim()));
 
   if(!list.length){ grid.innerHTML = `<div class="empty-note">ماكاينش حلقات تطابق البحث/التصنيف.</div>`; return; }
@@ -879,18 +1043,278 @@ function renderEpisodes(){
   wireEpisodeCards(grid);
 }
 
-function renderSiteVideos(){
+/* ============================================================
+   الخلاص عبر PayPal (الدرهم ماشي مدعوم فـ PayPal، فكيتحول تلقائيا لليورو)
+   ============================================================ */
+const MAD_TO_EUR_RATE = 10.7; // تقريبي، بدلها إلا بغيتي تحدثها
+function madToEur(mad){ return Math.max(0.5, mad / MAD_TO_EUR_RATE).toFixed(2); }
+
+/* ===== الاشتراك الشهري (وصول لكل شيء) ===== */
+const SUBSCRIPTION_PRICE_MAD = 50;
+const SUBSCRIPTION_DAYS = 30;
+function hasActiveSubscription(){
+  try{
+    const until = parseInt(localStorage.getItem('av-sub-until') || '0');
+    return Date.now() < until;
+  }catch(e){ return false; }
+}
+function activateSubscription(){
+  const until = Date.now() + SUBSCRIPTION_DAYS*24*60*60*1000;
+  try{ localStorage.setItem('av-sub-until', String(until)); }catch(e){}
+}
+
+/* ===== خصم الإحالة (referral) ===== */
+function getReferralDiscount(){
+  try{ return parseInt(sessionStorage.getItem('av-ref-discount') || '0'); }catch(e){ return 0; }
+}
+function getReferrerFromUrl(){
+  const p = new URLSearchParams(location.search);
+  return p.get('ref') || '';
+}
+(function initReferral(){
+  const ref = getReferrerFromUrl();
+  if(ref){
+    try{
+      sessionStorage.setItem('av-ref-discount', '10');
+      sessionStorage.setItem('av-ref-owner', ref);
+    }catch(e){}
+  }
+})();
+function applyDiscount(mad){
+  const d = getReferralDiscount();
+  return d > 0 ? +(mad * (1 - d/100)).toFixed(2) : mad;
+}
+
+function getPurchases(){ try{ return JSON.parse(localStorage.getItem('av-purchases')||'{}'); }catch(e){ return {}; } }
+function markPurchased(key, kind){
+  const p = getPurchases();
+  p[key] = p[key] || {};
+  p[key][kind] = true;
+  if(kind === 'both'){ p[key].watch = true; p[key].download = true; }
+  try{ localStorage.setItem('av-purchases', JSON.stringify(p)); }catch(e){}
+}
+function hasAccess(key, kind){
+  if(hasActiveSubscription()) return true;
+  const p = getPurchases();
+  return !!(p[key] && (p[key][kind] || p[key].both));
+}
+
+function rewardReferrerIfAny(){
+  try{
+    const owner = sessionStorage.getItem('av-ref-owner');
+    if(owner && window.avRewardReferrer){ window.avRewardReferrer(owner); }
+  }catch(e){}
+}
+
+function enableResume(videoEl, key){
+  const stKey = 'av-resume-' + slugify(key);
+  videoEl.addEventListener('loadedmetadata', () => {
+    const saved = parseFloat(localStorage.getItem(stKey) || '0');
+    if(saved > 5 && videoEl.duration && saved < videoEl.duration - 5){
+      videoEl.currentTime = saved;
+    }
+  });
+  let lastSave = 0;
+  videoEl.addEventListener('timeupdate', () => {
+    if(Math.abs(videoEl.currentTime - lastSave) > 5){
+      lastSave = videoEl.currentTime;
+      try{ localStorage.setItem(stKey, String(videoEl.currentTime)); }catch(e){}
+    }
+  });
+}
+
+async function renderRatingWidget(containerId, videoKey){
+  const el = document.getElementById(containerId);
+  if(!el || typeof window.avGetRating !== 'function') return;
+  const slug = slugify(videoKey);
+  const { avg, count } = await window.avGetRating(slug);
+  const alreadyRated = localStorage.getItem('av-rated-' + slug);
+  el.innerHTML = `
+    <div class="rating-stars" data-rated="${alreadyRated ? '1' : '0'}">
+      ${[1,2,3,4,5].map(n => `<span data-star="${n}" class="${n <= Math.round(avg) ? 'filled' : ''}">★</span>`).join('')}
+    </div>
+    <span class="rating-info">${avg ? avg.toFixed(1) : '—'} (${count})</span>
+  `;
+  if(alreadyRated) return;
+  el.querySelectorAll('[data-star]').forEach(star => {
+    star.addEventListener('click', async () => {
+      const stars = Number(star.dataset.star);
+      const ok = await window.avRateVideo(slug, stars);
+      if(ok){ try{ localStorage.setItem('av-rated-' + slug, '1'); }catch(e){} renderRatingWidget(containerId, videoKey); }
+    });
+  });
+}
+
+function triggerDownload(video){
+  const a = document.createElement('a');
+  a.href = video.src;
+  a.download = (video.title || 'video') + '.mp4';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+function slugify(str){
+  return String(str||'').replace(/[^a-zA-Z0-9]+/g, '_').slice(0,40) || 'v';
+}
+
+function renderPaypalPanel(panelEl, video, videoKey, kind, price, onSuccess){
+  const discountedMad = applyDiscount(price);
+  const eur = madToEur(discountedMad);
+  const hasDiscount = discountedMad < price;
+  const safeId = `ppButtons-${slugify(videoKey)}-${kind}-${Date.now()}`;
+  panelEl.innerHTML = `
+    <button class="paypal-panel-close" data-close-panel="1">${T('paypalCancel')}</button>
+    <div class="paypal-panel-price">${hasDiscount ? `<s style="opacity:0.5;">${price}</s> ` : ''}${discountedMad} ${T('madCurrency')} ≈ €${eur}${hasDiscount ? ` <span style="color:var(--teal);">(${T('discountApplied')})</span>` : ''}</div>
+    <div id="${safeId}"></div>
+  `;
+  panelEl.querySelector('[data-close-panel]').addEventListener('click', () => { panelEl.innerHTML = ''; });
+  if(typeof paypal === 'undefined'){
+    panelEl.innerHTML += `<p style="color:#e0567a; font-size:0.78rem; text-align:center;">${T('paypalLoadError')}</p>`;
+    return;
+  }
+  paypal.Buttons({
+    style: { layout:'vertical', color:'gold', shape:'pill', height:38 },
+    createOrder: (data, actions) => actions.order.create({
+      purchase_units: [{ amount: { value: eur, currency_code: 'EUR' }, description: `${video.title||video.category} (${kind})` }]
+    }),
+    onApprove: async (data, actions) => {
+      await actions.order.capture();
+      markPurchased(videoKey, kind);
+      rewardReferrerIfAny();
+      panelEl.innerHTML = `<p class="unlocked-note">${T('paypalSuccess')}</p>`;
+      onSuccess();
+    },
+    onError: (err) => {
+      console.warn('PayPal error', err);
+      panelEl.innerHTML += `<p style="color:#e0567a; font-size:0.78rem; text-align:center;">${T('paypalError')}</p>`;
+    }
+  }).render(`#${safeId}`).catch(err => {
+    console.warn('PayPal render failed', err);
+    panelEl.innerHTML += `<p style="color:#e0567a; font-size:0.78rem; text-align:center;">${T('paypalRenderError')}</p>`;
+  });
+}
+
+function renderSubscriptionBanner(containerId){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  if(hasActiveSubscription()){
+    const until = parseInt(localStorage.getItem('av-sub-until')||'0');
+    const untilStr = new Date(until).toLocaleDateString('ar-MA');
+    el.innerHTML = `<div class="sub-banner"><div><h4>✓ عندك اشتراك نشيط</h4><p>وصول لكل الفيديوهات والسلاسل حتى ${untilStr}</p></div></div>`;
+    return;
+  }
+  const discounted = applyDiscount(SUBSCRIPTION_PRICE_MAD);
+  el.innerHTML = `
+    <div class="sub-banner">
+      <div><h4>🔓 اشترك شهريا ووصل لكل شيء</h4><p>${SUBSCRIPTION_PRICE_MAD} ${T('madCurrency')}/الشهر — وصول كامل لكل الفيديوهات والسلاسل، مشاهدة وتحميل</p></div>
+      <button class="btn-primary" id="subCta-${containerId}">اشترك دابا</button>
+    </div>
+    <div class="paypal-panel" id="subPanel-${containerId}" style="margin-top:14px;"></div>
+  `;
+  document.getElementById(`subCta-${containerId}`).addEventListener('click', () => {
+    const panel = document.getElementById(`subPanel-${containerId}`);
+    renderPaypalPanel(panel, { title:'اشتراك شهري' }, 'subscription', 'subscription', SUBSCRIPTION_PRICE_MAD, () => {
+      activateSubscription();
+      renderSubscriptionBanner(containerId);
+      renderSiteVideos();
+      renderSeriesPage();
+    });
+  });
+}
   const grid = document.getElementById('videoGrid');
   const withSrc = siteVideos.filter(v => v.src);
-  if(!withSrc.length){ grid.innerHTML = `<div class="empty-note">مازال ماكاينة فيديوهات مزادة. زيدها فالليستة "siteVideos" (خاص src ماشي فارغ).</div>`; return; }
-  grid.innerHTML = withSrc.map(v => `
+  if(!withSrc.length){ grid.innerHTML = `<div class="empty-note">${T('videosEmptyNote')}</div>`; return; }
+  grid.innerHTML = withSrc.map((v,i) => {
+    const videoKey = v.title || v.src;
+    return `
     <div class="ep-card video-card">
-      <div class="ep-thumb" style="height:auto;">
+      <div class="ep-thumb video-gate-wrap" style="height:auto;">
         <span class="ep-tag">${v.category||''}</span>
-        <video src="${v.src}" ${v.poster?`poster="${v.poster}"`:''} controls preload="metadata"></video>
+        <button class="like-btn ${isInWatchLater(slugify(videoKey))?'liked':''}" data-watch-later="${slugify(videoKey)}" data-title="${(v.title||v.category||'').replace(/"/g,'&quot;')}" data-kind="site" style="left:auto; right:10px;">🔖</button>
+        <video id="siteVideo-${i}" src="${v.src}" ${v.poster?`poster="${v.poster}"`:''} controls preload="metadata"></video>
+        <div class="paywall-overlay" id="paywallOverlay-${i}">
+          <p>${T('paywallMsg')}</p>
+          <div class="paywall-options" id="paywallOptions-${i}">
+            <button class="paywall-btn" data-gate="${i}" data-kind="watch">${T('watchLabel')}<small>${v.priceWatch||0} ${T('madCurrency')} (~€${madToEur(v.priceWatch||0)})</small></button>
+            <button class="paywall-btn" data-gate="${i}" data-kind="download">${T('downloadLabel')}<small>${v.priceDownload||0} ${T('madCurrency')} (~€${madToEur(v.priceDownload||0)})</small></button>
+            <button class="paywall-btn" data-gate="${i}" data-kind="both">${T('bothLabel')}<small>${v.priceBoth||0} ${T('madCurrency')} (~€${madToEur(v.priceBoth||0)})</small></button>
+          </div>
+          <div class="paypal-panel" id="paypalPanel-${i}"></div>
+        </div>
       </div>
       <div class="ep-info"><h4>${v.title}</h4></div>
-    </div>`).join('');
+      <div class="rating-widget" id="rating-siteVideo-${i}"></div>
+      ${v.previewSeconds > 0 ? `
+      <div class="download-btn-row">
+        <button class="download-gate-btn" data-download-gate="${i}">⬇ ${T('downloadBtnLabel')} (${v.priceDownload||0} ${T('madCurrency')})</button>
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  withSrc.forEach((v, i) => {
+    const videoKey = v.title || v.src;
+    const videoEl = document.getElementById(`siteVideo-${i}`);
+    const overlay = document.getElementById(`paywallOverlay-${i}`);
+    if(!videoEl) return;
+    enableResume(videoEl, videoKey);
+    renderRatingWidget(`rating-siteVideo-${i}`, videoKey);
+    if(v.previewSeconds > 0 && !hasAccess(videoKey, 'watch')){
+      videoEl.addEventListener('timeupdate', () => {
+        if(videoEl.currentTime >= v.previewSeconds && !hasAccess(videoKey, 'watch')){
+          videoEl.pause();
+          overlay.classList.add('show');
+        }
+      });
+    }
+  });
+
+  grid.querySelectorAll('[data-watch-later]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const saved = toggleWatchLater(btn.dataset.watchLater, btn.dataset.title, btn.dataset.kind);
+      btn.classList.toggle('liked', saved);
+    });
+  });
+
+  grid.querySelectorAll('[data-gate]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = Number(btn.dataset.gate);
+      const v = withSrc[i];
+      const kind = btn.dataset.kind;
+      const videoKey = v.title || v.src;
+      const price = kind==='watch' ? v.priceWatch : kind==='download' ? v.priceDownload : v.priceBoth;
+      const panel = document.getElementById(`paypalPanel-${i}`);
+      renderPaypalPanel(panel, v, videoKey, kind, price, () => {
+        const overlay = document.getElementById(`paywallOverlay-${i}`);
+        const videoEl = document.getElementById(`siteVideo-${i}`);
+        setTimeout(() => {
+          if(kind === 'watch' || kind === 'both'){
+            overlay.classList.remove('show');
+            videoEl.play().catch(()=>{});
+          }
+          if(kind === 'download' || kind === 'both'){
+            triggerDownload(v);
+          }
+        }, 1200);
+      });
+    });
+  });
+
+  grid.querySelectorAll('[data-download-gate]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = Number(btn.dataset.downloadGate);
+      const v = withSrc[i];
+      const videoKey = v.title || v.src;
+      if(hasAccess(videoKey, 'download')){ triggerDownload(v); return; }
+      const overlay = document.getElementById(`paywallOverlay-${i}`);
+      overlay.classList.add('show');
+      const panel = document.getElementById(`paypalPanel-${i}`);
+      renderPaypalPanel(panel, v, videoKey, 'download', v.priceDownload, () => {
+        setTimeout(() => triggerDownload(v), 1200);
+      });
+    });
+  });
 }
 
 function renderTestimonials(){
@@ -1073,8 +1497,765 @@ document.querySelector('[data-page="episodes"]').addEventListener('click', () =>
   }catch(e){}
 });
 
+/* ============================================================
+   السلاسل (صفحة مستقلة) — زيد/بدل هنا بالكامل بيدك.
+   الفيديوهات هنا ملفات من الكمبيوتر (mp4...)، ماشي يوتيوب.
+
+   إعدادات السلسلة:
+   freeCount   : عدد الحلقات (بالترتيب، أول حلقات فالليستة) لي تكونو مجانيين
+                 أوتوماتيك (مشاهدة + تحميل بلا خلاص). الباقي كيتقفلو
+                 (مشاهدة و تحميل بجوج محتاجين خلاص، ماشي غير التحميل).
+                 حطها 0 إلا بغيتي حتى حلقة ماتكونش مجانية أوتوماتيك.
+
+   إعدادات كل حلقة (item):
+   src            : مسار الملف
+   poster         : (اختياري) صورة قبل التشغيل
+   title          : عنوان الجزء
+   free           : (اختياري) true/false — إلا حطيتيها كتغلب على freeCount
+                    ديال السلسلة لهاد الحلقة بالضبط.
+   releaseAt      : (اختياري) تاريخ ووقت الإطلاق، مثلا "2026-08-15T18:00:00".
+                    قبل هاد الوقت، الحلقة كتبان "قريبا" ومقفولة نهائيا
+                    (حتى ولو مجانية)، ومن بعده كتفتح أوتوماتيك.
+   previewSeconds, priceWatch, priceDownload, priceBoth : نفس نظام الخلاص
+                    ديال صفحة "فيديوهات" (غير مستعملين إلا الحلقة ماشي مجانية).
+   ============================================================ */
+const seriesList = [
+  {
+ name: "حكاية قبل الإفطار",
+
+
+
+
+
+
+
+    freeCount:20,
+
+
+
+
+
+
+
+    description:"حكاية قبل الإفطار هو بودكاست رمضاني هادئ، يقدّم قصصًا واقعية وإنسانية قصيرة، تُروى بأسلوب بسيط وعميق، وتُلامس القلوب في الدقائق التي تسبق أذان المغرب. في كل حلقة، نعيش حكاية مختلفة: موقف عابر، فعل خير خفي، صبر في لحظة ضعف، أو عِبرة وُلدت من الجوع والتعب… قصص تُذكّرنا بأن الخير لا يحتاج ضجيجًا، وأن الله حاضر في التفاصيل الصغيرة. 🎧 هذا البودكاست موجّه لكل من: يبحث عن لحظة سكينة قبل الإفطار يحب القصص الهادئة ذات المعنى يريد إنهاء يوم الصيام بكلمة طيبة وعِبرة صادقة 📌 مميزات البرنامج: أسلوب سرد هادئ مناسب للـ Podcast & Voice-over قصص قصيرة مؤثرة مستوحاة من الواقع محتوى نظيف، إنساني، وعائلي مثالي للاستماع قبل الإفطار أو في وقت هدوء 🕯️ حكاية قبل الإفطار ليست مجرد قصص… بل لحظات تأمل، ورسائل أمل، وذكرى جميلة من رمضان.",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    items: [
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 1.mp4", poster: "حكاية قبل الافطار (6).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 1",  previewSeconds: 30, priceWatch: 10, priceDownload: 20, priceBoth: 30 },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 2.mp4", poster: "حكاية قبل الافطار (7).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 2" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 3.mp4", poster: "حكاية قبل الافطار (8).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 3" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 4.mp4", poster: "حكاية قبل الافطار (9).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 4" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 5.mp4", poster: "حكاية قبل الافطار (10).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 5" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 6.mp4", poster: "حكاية قبل الافطار (11).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 6" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 7.mp4", poster: "حكاية قبل الافطار (12).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 7" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 8.mp4", poster: "حكاية قبل الافطار (13).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 8" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 9.mp4", poster: "حكاية قبل الافطار (14).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 9" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 10.mp4", poster: "حكاية قبل الافطار (15).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 10" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 11.mp4", poster: "حكاية قبل الافطار (16).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 11" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 12.mp4", poster: "حكاية قبل الافطار (17).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 12" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 13.mp4", poster: "حكاية قبل الافطار (18).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 13" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 14.mp4", poster: "حكاية قبل الافطار (19).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 14" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 15.mp4", poster: "حكاية قبل الافطار (20).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 15" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 16.mp4", poster: "حكاية قبل الافطار (25).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 16" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 17.mp4", poster: "حكاية قبل الافطار (26).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 17" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 18.mp4", poster: "حكاية قبل الافطار (27).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 18" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 19.mp4", poster: "حكاية قبل الافطار (28).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 19" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 20.mp4", poster: "حكاية قبل الافطار (29).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 20" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 21.mp4", poster: "حكاية قبل الافطار (30).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 21" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 22.mp4", poster: "حكاية قبل الافطار (31).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 22" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 23.mp4", poster: "حكاية قبل الافطار (32).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 23" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 24.mp4", poster: "حكاية قبل الافطار (33).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 24" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 25.mp4", poster: "حكاية قبل الافطار (34).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 25" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 26.mp4", poster: "حكاية قبل الافطار (35).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 26" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 27.mp4", poster: "حكاية قبل الافطار (36).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 27" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 28.mp4", poster: "حكاية قبل الافطار (37).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 28" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 29.mp4", poster: "حكاية قبل الافطار (38).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 29" },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      { src: "الحلقة 30.mp4", poster: "حكاية قبل الافطار (39).png", title: "حكاية قبل الإفطار | الحلقـــــــــةالأخيرة",  },
+
+
+
+    ]
+  },
+  // زيد سلاسل أخرى هنا بنفس الشكل:
+  // { name: "سلسلة ثانية", freeCount: 2, items: [ { src: "series/clip.mp4", title: "...", releaseAt: "2026-09-01T20:00:00" } ] },
+];
+
+function isItemFree(series, item, index){
+  if(typeof item.free === 'boolean') return item.free;
+  const freeCount = series.freeCount ?? 0;
+  return index < freeCount;
+}
+
+function renderCountdown(el, releaseDate){
+  function tick(){
+    const diff = releaseDate - new Date();
+    if(diff <= 0){ el.textContent = T('countdownReady'); clearInterval(timer); return; }
+    const d = Math.floor(diff/86400000), h = Math.floor(diff%86400000/3600000), m = Math.floor(diff%3600000/60000);
+    el.textContent = `⏳ ${T('countdownPrefix')} ${d}${T('daysUnit')} ${h}${T('hoursUnit')} ${m}${T('minsUnit')}`;
+  }
+  tick();
+  const timer = setInterval(tick, 60000);
+}
+
+function renderSeriesPage(){
+  const container = document.getElementById('seriesPageList');
+  if(!container) return;
+  const t = (key) => (i18n[key] && (i18n[key][currentLang] || i18n[key].ar)) || '';
+  const ANNOUNCE_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 ساعة قبل الإطلاق تبدا تبان مقفولة
+  const BUNDLE_DISCOUNT_PERCENT = 15;
+
+  function itemStatus(it){
+    if(!it.releaseAt) return 'live';
+    const releaseDate = new Date(it.releaseAt);
+    const diff = releaseDate - new Date();
+    if(diff > ANNOUNCE_WINDOW_MS) return 'hidden';   // بعيد بزاف، ماتبانش نهائيا
+    if(diff > 0) return 'locked';                     // فنافذة 24 ساعة، بانة مقفولة
+    return 'live';                                     // طلق وقتها
+  }
+
+  function seriesPaidItems(s){
+    return s.items.filter((it, idx) => it.src && !isItemFree(s, it, idx) && (it.priceBoth||0) > 0);
+  }
+  function seriesBundlePrice(s){
+    const paid = seriesPaidItems(s);
+    const total = paid.reduce((sum, it) => sum + (it.priceBoth||0), 0);
+    return +(total * (1 - BUNDLE_DISCOUNT_PERCENT/100)).toFixed(2);
+  }
+  function seriesAllPurchased(s){
+    if(hasActiveSubscription()) return true;
+    const paid = seriesPaidItems(s);
+    if(!paid.length) return false;
+    return paid.every(it => hasAccess(`${s.name}__${it.title || it.src}`, 'both'));
+  }
+
+  const withItems = seriesList.filter(s => s.items && s.items.some(it => it.src && itemStatus(it) !== 'hidden'));
+  if(!withItems.length){
+    container.innerHTML = `<div class="empty-note">${t('seriesEmptyNote')}</div>`;
+    return;
+  }
+  container.innerHTML = withItems.map(s => {
+    const paid = seriesPaidItems(s);
+    const bundlePrice = seriesBundlePrice(s);
+    const originalTotal = paid.reduce((sum, it) => sum + (it.priceBoth||0), 0);
+    const boughtAll = seriesAllPurchased(s);
+    return `
+    <div style="margin-bottom:56px;">
+      <div class="section-head" style="margin-bottom:22px;">
+        <p class="eyebrow">${t('seriesCardEyebrow')}</p>
+        <h2>${s.name}</h2>
+        ${s.description ? `<p style="color:var(--cream-dim); margin-top:10px;">${s.description}</p>` : ''}
+      </div>
+      ${paid.length > 1 && !boughtAll ? `
+      <div class="sub-banner" style="margin-bottom:22px;">
+        <div><h4>🎁 شري السلسلة كاملة</h4><p>${bundlePrice} ${T('madCurrency')} بدل <s style="opacity:0.6;">${originalTotal}</s> ${T('madCurrency')} (خصم ${BUNDLE_DISCOUNT_PERCENT}%) — وصول لكل حلقات هاد السلسلة</p></div>
+        <button class="btn-primary" data-bundle-buy="${slugify(s.name)}">شري البندل</button>
+      </div>
+      <div class="paypal-panel" id="bundlePanel-${slugify(s.name)}" style="margin-bottom:22px;"></div>
+      ` : (paid.length && boughtAll ? `<p style="color:var(--teal); margin-bottom:22px; font-size:0.9rem;">✓ عندك وصول كامل لهاد السلسلة</p>` : '')}
+      <div class="ep-grid series-grid" data-series="${s.name}"></div>
+    </div>
+  `;
+  }).join('');
+
+  withItems.forEach(s => {
+    const bundleBtn = container.querySelector(`[data-bundle-buy="${slugify(s.name)}"]`);
+    if(bundleBtn){
+      bundleBtn.addEventListener('click', () => {
+        const panel = document.getElementById(`bundlePanel-${slugify(s.name)}`);
+        const paid = seriesPaidItems(s);
+        const bundlePrice = seriesBundlePrice(s);
+        renderPaypalPanel(panel, { title: `بندل: ${s.name}` }, `bundle__${s.name}`, 'both', bundlePrice, () => {
+          paid.forEach(it => markPurchased(`${s.name}__${it.title || it.src}`, 'both'));
+          setTimeout(() => renderSeriesPage(), 800);
+        });
+      });
+    }
+  });
+
+  withItems.forEach(s => {
+    const grid = container.querySelector(`[data-series="${s.name}"]`);
+    // ملاحظة: البرمجة (idx) كتحسب حسب الترتيب الأصلي فالليستة، حتى ولو خفينا شي حلقة، باش
+    // freeCount يبقى صحيح ديما (ماشي مرتبط بعدد الحلقات الظاهرين فقط).
+    const validItems = s.items
+      .map((it, originalIdx) => ({ it, originalIdx }))
+      .filter(({it}) => it.src && itemStatus(it) !== 'hidden');
+
+    grid.innerHTML = validItems.map(({it, originalIdx}) => {
+      const status = itemStatus(it);
+      const releaseDate = it.releaseAt ? new Date(it.releaseAt) : null;
+      const free = isItemFree(s, it, originalIdx);
+      const videoKey = `${s.name}__${it.title || it.src}`;
+      const vid = `series-${slugify(s.name)}-${originalIdx}`;
+
+      if(status === 'locked'){
+        return `
+        <div class="ep-card video-card">
+          <div class="ep-thumb" style="height:145px; position:relative; ${it.poster ? `background-image:url('${it.poster}'); background-size:cover; background-position:center;` : ''}">
+            <div style="position:absolute; inset:0; background:rgba(10,19,14,0.72); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:16px;">
+              <span style="font-size:1.6rem;">🔒</span>
+              <span id="countdown-${vid}" style="font-size:0.82rem; color:var(--gold-light); text-align:center;"></span>
+            </div>
+          </div>
+          <div class="ep-info"><h4>${it.title}</h4></div>
+        </div>`;
+      }
+      return `
+        <div class="ep-card video-card">
+          <div class="ep-thumb video-gate-wrap" style="height:auto;">
+            ${free ? `<span class="ep-tag" style="background:rgba(63,143,136,0.7);">${T('freeTag')}</span>` : ''}
+            <button class="like-btn ${isInWatchLater(slugify(videoKey))?'liked':''}" data-watch-later="${slugify(videoKey)}" data-title="${(it.title||'').replace(/"/g,'&quot;')}" data-kind="series" style="left:auto; right:10px;">🔖</button>
+            <video id="siteVideo-${vid}" src="${it.src}" ${it.poster ? `poster="${it.poster}"` : ''} controls preload="metadata"></video>
+            ${!free ? `
+            <div class="paywall-overlay" id="paywallOverlay-${vid}">
+              <p>${T('paywallMsg')}</p>
+              <div class="paywall-options">
+                <button class="paywall-btn" data-series-gate="${vid}" data-kind="watch">${T('watchLabel')}<small>${it.priceWatch||0} ${T('madCurrency')} (~€${madToEur(it.priceWatch||0)})</small></button>
+                <button class="paywall-btn" data-series-gate="${vid}" data-kind="download">${T('downloadLabel')}<small>${it.priceDownload||0} ${T('madCurrency')} (~€${madToEur(it.priceDownload||0)})</small></button>
+                <button class="paywall-btn" data-series-gate="${vid}" data-kind="both">${T('bothLabel')}<small>${it.priceBoth||0} ${T('madCurrency')} (~€${madToEur(it.priceBoth||0)})</small></button>
+              </div>
+              <div class="paypal-panel" id="paypalPanel-${vid}"></div>
+            </div>` : ''}
+          </div>
+          <div class="ep-info"><h4>${it.title}</h4></div>
+          <div class="rating-widget" id="rating-${vid}"></div>
+          ${!free ? `
+          <div class="download-btn-row">
+            <button class="download-gate-btn" data-series-download="${vid}">⬇ ${T('downloadBtnLabel')} (${it.priceDownload||0} ${T('madCurrency')})</button>
+          </div>` : `
+          <div class="download-btn-row">
+            <button class="download-gate-btn" data-series-free-download="${vid}">⬇ ${T('freeDownloadBtnLabel')}</button>
+          </div>`}
+        </div>`;
+    }).join('');
+
+    validItems.forEach(({it, originalIdx}) => {
+      const status = itemStatus(it);
+      const releaseDate = it.releaseAt ? new Date(it.releaseAt) : null;
+      const vid = `series-${slugify(s.name)}-${originalIdx}`;
+      if(status === 'locked'){
+        const el = document.getElementById(`countdown-${vid}`);
+        if(el) renderCountdown(el, releaseDate);
+        return;
+      }
+      const free = isItemFree(s, it, originalIdx);
+      const videoKey = `${s.name}__${it.title || it.src}`;
+      const videoEl = document.getElementById(`siteVideo-${vid}`);
+      if(!videoEl) return;
+      enableResume(videoEl, videoKey);
+      renderRatingWidget(`rating-${vid}`, videoKey);
+      const wlBtn = grid.querySelector(`[data-watch-later="${slugify(videoKey)}"]`);
+      wlBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const saved = toggleWatchLater(slugify(videoKey), it.title, 'series');
+        wlBtn.classList.toggle('liked', saved);
+      });
+
+      if(!free){
+        const overlay = document.getElementById(`paywallOverlay-${vid}`);
+        if(it.previewSeconds > 0 && !hasAccess(videoKey, 'watch')){
+          videoEl.addEventListener('timeupdate', () => {
+            if(videoEl.currentTime >= it.previewSeconds && !hasAccess(videoKey, 'watch')){
+              videoEl.pause();
+              overlay.classList.add('show');
+            }
+          });
+        }
+        grid.querySelectorAll(`[data-series-gate="${vid}"]`).forEach(btn => {
+          btn.addEventListener('click', () => {
+            const kind = btn.dataset.kind;
+            const price = kind==='watch' ? it.priceWatch : kind==='download' ? it.priceDownload : it.priceBoth;
+            const panel = document.getElementById(`paypalPanel-${vid}`);
+            renderPaypalPanel(panel, it, videoKey, kind, price, () => {
+              setTimeout(() => {
+                if(kind === 'watch' || kind === 'both'){ overlay.classList.remove('show'); videoEl.play().catch(()=>{}); }
+                if(kind === 'download' || kind === 'both'){ triggerDownload(it); }
+              }, 1200);
+            });
+          });
+        });
+        const dlBtn = grid.querySelector(`[data-series-download="${vid}"]`);
+        dlBtn?.addEventListener('click', () => {
+          if(hasAccess(videoKey, 'download')){ triggerDownload(it); return; }
+          overlay.classList.add('show');
+          const panel = document.getElementById(`paypalPanel-${vid}`);
+          renderPaypalPanel(panel, it, videoKey, 'download', it.priceDownload, () => {
+            setTimeout(() => triggerDownload(it), 1200);
+          });
+        });
+      } else {
+        const freeDlBtn = grid.querySelector(`[data-series-free-download="${vid}"]`);
+        freeDlBtn?.addEventListener('click', () => triggerDownload(it));
+      }
+    });
+  });
+}
+// renderSeriesPage() كيتصاوب أوتوماتيك مع applyLanguage() فأسفل الملف
+
 renderTestimonials();
-renderSiteVideos();
+// renderSiteVideos() كيتصاوب أوتوماتيك مع applyLanguage() فأسفل الملف
 renderTagCloud();
 renderFAQ();
 renderAboutTimeline();
@@ -1086,6 +2267,7 @@ renderAboutTimeline();
   activeEpisodes = fetched && fetched.length ? fetched : episodes;
   renderChips();
   renderArchive();
+  renderSeries();
   renderFeatured();
   renderEpisodes();
   checkNewEpisodeBadge(activeEpisodes);
@@ -1094,7 +2276,7 @@ renderAboutTimeline();
 const navLinks = document.querySelectorAll('[data-page]');
 const pages = document.querySelectorAll('.page');
 const transitionEl = document.getElementById('pageTransition');
-const pageOrder = ['home','episodes','videos','about','faq'];
+const pageOrder = ['home','episodes','videos','about','series','faq'];
 
 function goToPage(name){
   transitionEl.classList.add('show');
@@ -1284,6 +2466,31 @@ const i18n = {
   faqPageEyebrow: { ar:"أسئلة متكررة", fr:"Questions fréquentes", en:"Frequent questions" },
   faqPageTitle: { ar:"الأسئلة الشائعة", fr:"FAQ", en:"FAQ" },
   faqPageText: { ar:"أجوبة على الأسئلة اللي كتوصلني بزاف من المتابعين.", fr:"Réponses aux questions que je reçois souvent des abonnés.", en:"Answers to questions I often get from followers." },
+  navSeries: { ar:"السلاسل", fr:"Séries", en:"Series" },
+  seriesPageEyebrow: { ar:"مجموعات مختارة", fr:"Collections choisies", en:"Curated collections" },
+  seriesPageTitle: { ar:"السلاسل", fr:"Séries", en:"Series" },
+  seriesPageText: { ar:"حلقات مجمّعة حسب الموضوع، سلسلة سلسلة.", fr:"Des épisodes regroupés par thème, série par série.", en:"Episodes grouped by theme, series by series." },
+  seriesCardEyebrow: { ar:"🎞 سلسلة", fr:"🎞 Série", en:"🎞 Series" },
+  seriesEmptyNote: { ar:'مازال ماكاينة سلاسل مزادة. زيدها فالليستة "seriesList" فكود الصفحة.', fr:'Aucune série ajoutée pour le moment. Ajoute-les dans la liste "seriesList" du code.', en:'No series added yet. Add them in the "seriesList" array in the page code.' },
+  videosEmptyNote: { ar:'مازال ماكاينة فيديوهات مزادة. زيدها فالليستة "siteVideos" (خاص src ماشي فارغ).', fr:'Aucune vidéo ajoutée pour le moment. Ajoute-les dans la liste "siteVideos" (le champ src ne doit pas être vide).', en:'No videos added yet. Add them in the "siteVideos" array (the src field must not be empty).' },
+  paywallMsg: { ar:"خلصات المعاينة المجانية. اختار باش تكمل:", fr:"L'aperçu gratuit est terminé. Choisis pour continuer :", en:"Free preview ended. Choose an option to continue:" },
+  watchLabel: { ar:"مشاهدة", fr:"Regarder", en:"Watch" },
+  downloadLabel: { ar:"تحميل", fr:"Télécharger", en:"Download" },
+  bothLabel: { ar:"بجوج", fr:"Les deux", en:"Both" },
+  madCurrency: { ar:"درهم", fr:"MAD", en:"MAD" },
+  downloadBtnLabel: { ar:"تحميل الفيديو", fr:"Télécharger la vidéo", en:"Download video" },
+  freeTag: { ar:"مجاني", fr:"Gratuit", en:"Free" },
+  freeDownloadBtnLabel: { ar:"تحميل مجاني", fr:"Téléchargement gratuit", en:"Free download" },
+  paypalCancel: { ar:"إلغاء ✕", fr:"Annuler ✕", en:"Cancel ✕" },
+  paypalSuccess: { ar:"✓ تم الخلاص بنجاح!", fr:"✓ Paiement réussi !", en:"✓ Payment successful!" },
+  paypalError: { ar:"وقع خطأ فالخلاص، جرب مرة أخرى.", fr:"Une erreur de paiement est survenue, réessaie.", en:"A payment error occurred, please try again." },
+  paypalLoadError: { ar:"تعذر تحميل PayPal. تأكد من الاتصال بالانترنت، ومن أنك كتحل الموقع بسيرفر (ماشي file://).", fr:"Impossible de charger PayPal. Vérifie ta connexion internet, et que le site est ouvert via un serveur (pas file://).", en:"Couldn't load PayPal. Check your internet connection, and make sure the site is opened via a server (not file://)." },
+  paypalRenderError: { ar:"تعذر عرض زر PayPal.", fr:"Impossible d'afficher le bouton PayPal.", en:"Couldn't display the PayPal button." },
+  countdownReady: { ar:"راه طلقات! عاود حمل الصفحة 🔄", fr:"C'est disponible maintenant ! Recharge la page 🔄", en:"It's now available! Reload the page 🔄" },
+  countdownPrefix: { ar:"كتطلق من هنا", fr:"Disponible dans", en:"Available in" },
+  daysUnit: { ar:" يوم", fr:"j", en:"d" },
+  hoursUnit: { ar:" ساعة", fr:"h", en:"h" },
+  minsUnit: { ar:" دقيقة", fr:"min", en:"min" },
 };
 
 function applyLanguage(lang){
@@ -1307,7 +2514,15 @@ function applyLanguage(lang){
   renderFAQ();
   renderAboutTimeline();
   renderWeeklyQuestion();
+  renderSeriesPage();
+  renderSiteVideos();
+  renderSubscriptionBanner('subBanner');
+  renderSubscriptionBanner('subBannerSeries');
 }
+
+// كل دقيقة، نشيكو واش كاينة حلقات ديال السلسلة طلق وقت ظهورها (24 ساعة قبل)
+// أو طلق وقت الإطلاق ديالها، ونعاودو نبنيو الصفحة بلا reload
+setInterval(() => { renderSeriesPage(); }, 60000);
 
 document.querySelectorAll('.lang-switch button').forEach(btn => {
   btn.addEventListener('click', () => applyLanguage(btn.dataset.lang));
@@ -1323,6 +2538,7 @@ applyLanguage(savedLang);
      المفاتيح ديال Firebase ديالك مزادين هنا. إلا بغيتي تبدل المشروع،
      بدل الأرقام فـ firebaseConfig بالأرقام الجداد.
      ============================================================ -->
+<script src="https://www.paypal.com/sdk/js?client-id=AVpG0E5KgT9uBqgULvnzE9cO9fhXkreVPl_JcRKD-C0EbaFJK9EOPq1_UNYap7yp0cW-X2HctpTC8-0K&currency=EUR"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -1333,7 +2549,7 @@ applyLanguage(savedLang);
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
   import {
     getFirestore, collection, addDoc, deleteDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
-    doc, runTransaction, setDoc, getCountFromServer, where, Timestamp
+    doc, runTransaction, setDoc, getDoc, getCountFromServer, where, Timestamp
   } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -1476,6 +2692,47 @@ applyLanguage(savedLang);
     });
     if(lastCommentsSnapshot) renderComments(lastCommentsSnapshot);
   });
+
+  // ===== رابط الإحالة (referral) =====
+  document.getElementById('referralBtn').addEventListener('click', () => {
+    if(!currentUser){ alert('سجل الدخول أولا باش تقدر تاخد رابط الإحالة ديالك.'); openAuthModal(); return; }
+    const link = `${location.origin}${location.pathname}?ref=${currentUser.uid}`;
+    navigator.clipboard?.writeText(link).catch(()=>{});
+    alert(`رابط الإحالة ديالك (تنسخ للحافظة):\n\n${link}\n\nكل واحد يسجل ويشري بيه، كيربح خصم 10%، وأنت كتربح نقطة فحساب الإحالات ديالك.`);
+  });
+
+  window.avRewardReferrer = async function(uid){
+    try{
+      const ref = doc(db, 'referrals', uid);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        const points = snap.exists() ? (snap.data().points || 0) : 0;
+        tx.set(ref, { points: points + 1 }, { merge: true });
+      });
+    }catch(err){ console.warn('تعذر تسجيل نقطة الإحالة', err); }
+  };
+
+  // ===== التقييم بالنجوم (Firestore) =====
+  window.avGetRating = async function(slug){
+    try{
+      const snap = await getDoc(doc(db, 'ratings', slug));
+      if(!snap.exists()) return { avg:0, count:0 };
+      const d = snap.data();
+      return { avg: d.count ? d.sum/d.count : 0, count: d.count||0 };
+    }catch(err){ console.warn('تعذر جلب التقييم', err); return { avg:0, count:0 }; }
+  };
+  window.avRateVideo = async function(slug, stars){
+    try{
+      const ref = doc(db, 'ratings', slug);
+      await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        const sum = snap.exists() ? (snap.data().sum||0) : 0;
+        const count = snap.exists() ? (snap.data().count||0) : 0;
+        tx.set(ref, { sum: sum+stars, count: count+1 }, { merge: true });
+      });
+      return true;
+    }catch(err){ console.warn('تعذر إرسال التقييم', err); return false; }
+  };
 
   // ===== real comments (Firestore) on the About page =====
   const commentsCol = collection(db, 'comments');
