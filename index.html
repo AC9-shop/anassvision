@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>رؤيـة أنس | Anass Vision</title>
 <meta name="description" content="رؤيـة أنس: قناة تأخذكم في رحلة عبر القصص والتاريخ والأفكار المتنوعة.">
+<link rel="icon" type="image/png" sizes="32x32" href="3.png">
+<link rel="icon" type="image/png" sizes="16x16" href="3.png">
+<link rel="apple-touch-icon" sizes="180x180" href="3.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
@@ -284,6 +287,11 @@
   .paypal-panel{ width:100%; max-width:260px; background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; }
   .paypal-panel:empty{ display:none; padding:0; border:none; }
   .paypal-panel-close{ display:block; margin:0 auto 10px; background:none; border:none; color:var(--cream-dim); font-size:0.78rem; cursor:pointer; }
+  .video-watermark{
+    position:absolute; bottom:8px; left:10px; z-index:4; pointer-events:none;
+    color:rgba(255,255,255,0.55); font-family:'Cairo',sans-serif; font-size:0.78rem; font-weight:700;
+    text-shadow:0 1px 3px rgba(0,0,0,0.8); letter-spacing:0.5px;
+  }
   .paypal-panel-price{ text-align:center; color:var(--gold-light); font-size:0.9rem; margin-bottom:10px; }
   .unlocked-note{ color:var(--teal); font-size:0.8rem; }
   .rating-widget{ display:flex; align-items:center; gap:6px; padding:0 18px 14px; }
@@ -382,11 +390,26 @@
   .qr-block span{ font-size:0.75rem; color:var(--cream-dim); }
   .fine{ color:var(--cream-dim); font-size:0.78rem; opacity:0.7; }
 
+  .hamburger-btn{ display:none; }
+  #mobileMenu{ display:none; }
+
   @media (max-width:720px){
     .ep-grid{ grid-template-columns:1fr; } .dest-grid{ grid-template-columns:1fr; }
     .testi-row{ grid-template-columns:1fr; } .featured-strip{ grid-template-columns:1fr; }
     .stat{ padding:0 16px; } .nav-links{ display:none; } .about-hero{ flex-direction:column; text-align:center; }
+    .hamburger-btn{ display:flex; }
+    #mobileMenu.show{ display:flex; }
   }
+  #mobileMenu{
+    position:fixed; inset:0; z-index:950; background:rgba(10,19,14,0.96);
+    flex-direction:column; align-items:center; justify-content:center; gap:26px;
+  }
+  #mobileMenu a{
+    color:var(--cream); font-size:1.3rem; font-family:'Aref Ruqaa',serif; cursor:pointer;
+    padding:6px 20px; border-bottom:2px solid transparent;
+  }
+  #mobileMenu a.active{ color:var(--gold-light); border-color:var(--gold); }
+  #mobileMenuClose{ position:absolute; top:20px; left:20px; }
   @media (prefers-reduced-motion:reduce){ html{ scroll-behavior:auto; } *{ transition:none!important; animation:none!important; } }
 </style>
 </head>
@@ -483,9 +506,20 @@
       <button class="icon-btn" id="shareSiteBtn" title="شارك الموقع">🔗</button>
       <button class="icon-btn" id="themeToggle" title="بدل المظهر">🌙</button>
       <a class="nav-cta" href="https://www.youtube.com/channel/UCzPGTjQSHJmgtR3Mdohu_Yw" target="_blank" rel="noopener" data-i18n="navSubscribe">اشترك الآن</a>
+      <button class="icon-btn hamburger-btn" id="hamburgerBtn" title="القائمة">☰</button>
     </div>
   </div>
 </header>
+
+<div id="mobileMenu">
+  <button class="icon-btn" id="mobileMenuClose">✕</button>
+  <a data-page="home" data-i18n="navHome">الرئيسية</a>
+  <a data-page="episodes" data-i18n="navEpisodes">الحلقات</a>
+  <a data-page="videos" data-i18n="navVideos">فيديوهات</a>
+  <a data-page="series" data-i18n="navSeries">السلاسل</a>
+  <a data-page="about" data-i18n="navAbout">من أنا</a>
+  <a data-page="faq" data-i18n="navFaq">الأسئلة الشائعة</a>
+</div>
 
 <div class="page active" id="page-home">
   <div class="hero-media" id="parallaxWrap">
@@ -1145,13 +1179,90 @@ async function renderRatingWidget(containerId, videoKey){
   });
 }
 
-function triggerDownload(video){
+/* ============================================================
+   تحميل بعلامة مائية (watermark) — كتحرق "Anass Vision" فوق الفيديو
+   حقيقي (ماشي طبقة CSS)، كتخدم فالمتصفح ديال الزائر بتقنية
+   ffmpeg.wasm. أول مرة كتحمل ~25 ميغا، والمعالجة كتاخد وقت.
+   ============================================================ */
+const WATERMARK_TEXT = "Anass Vision";
+const WATERMARK_FONT_URL = "https://cdn.jsdelivr.net/gh/google/fonts/apache/roboto/Roboto-Bold.ttf";
+let _ffmpegInstance = null;
+let _ffmpegLoading = null;
+
+function showDownloadToast(msg){
+  let el = document.getElementById('downloadToast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'downloadToast';
+    el.style.cssText = 'position:fixed; bottom:70px; right:18px; z-index:1500; background:var(--panel); border:1px solid var(--gold); color:var(--gold-light); padding:12px 18px; border-radius:12px; font-family:Cairo,sans-serif; font-size:0.85rem; max-width:260px; box-shadow:0 8px 20px rgba(0,0,0,0.4);';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  return el;
+}
+function hideDownloadToast(){
+  const el = document.getElementById('downloadToast');
+  if(el) el.style.display = 'none';
+}
+
+async function getFfmpeg(){
+  if(_ffmpegInstance) return _ffmpegInstance;
+  if(_ffmpegLoading) return _ffmpegLoading;
+  _ffmpegLoading = (async () => {
+    const { createFFmpeg } = FFmpeg;
+    const ff = createFFmpeg({ log: false });
+    await ff.load();
+    _ffmpegInstance = ff;
+    return ff;
+  })();
+  return _ffmpegLoading;
+}
+
+async function downloadPlain(video){
   const a = document.createElement('a');
   a.href = video.src;
   a.download = (video.title || 'video') + '.mp4';
   document.body.appendChild(a);
   a.click();
   a.remove();
+}
+
+async function triggerDownload(video){
+  if(typeof FFmpeg === 'undefined'){
+    console.warn('ffmpeg.wasm غير محمّل، كيتحمل الملف الأصلي بلا علامة مائية.');
+    return downloadPlain(video);
+  }
+  const toast = showDownloadToast('⏳ كيتجهز الفيديو بالعلامة المائية... (يمكن ياخد وقت)');
+  try{
+    const ffmpeg = await getFfmpeg();
+    const { fetchFile } = FFmpeg;
+    if(!ffmpeg.FS('readdir', '/').includes('watermark.ttf')){
+      ffmpeg.FS('writeFile', 'watermark.ttf', await fetchFile(WATERMARK_FONT_URL));
+    }
+    ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(video.src));
+    await ffmpeg.run(
+      '-i', 'input.mp4',
+      '-vf', `drawtext=fontfile=watermark.ttf:text='${WATERMARK_TEXT}':fontcolor=white@0.65:fontsize=28:x=w-tw-20:y=h-th-20:box=1:boxcolor=black@0.35:boxborderw=8`,
+      '-codec:a', 'copy',
+      'output.mp4'
+    );
+    const data = ffmpeg.FS('readFile', 'output.mp4');
+    const blob = new Blob([data.buffer], { type: 'video/mp4' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = (video.title || 'video') + '-anassvision.mp4';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    hideDownloadToast();
+  }catch(err){
+    console.warn('تعذرت معالجة العلامة المائية، كيتحمل الملف الأصلي.', err);
+    hideDownloadToast();
+    downloadPlain(video);
+  }
 }
 
 function slugify(str){
@@ -1229,12 +1340,14 @@ function renderSiteVideos(){
   if(!withSrc.length){ grid.innerHTML = `<div class="empty-note">${T('videosEmptyNote')}</div>`; return; }
   grid.innerHTML = withSrc.map((v,i) => {
     const videoKey = v.title || v.src;
+    const free = v.free === true;
     return `
     <div class="ep-card video-card">
       <div class="ep-thumb video-gate-wrap" style="height:auto;">
-        <span class="ep-tag">${v.category||''}</span>
+        ${free ? `<span class="ep-tag" style="background:rgba(63,143,136,0.7);">${T('freeTag')}</span>` : `<span class="ep-tag">${v.category||''}</span>`}
         <button class="like-btn ${isInWatchLater(slugify(videoKey))?'liked':''}" data-watch-later="${slugify(videoKey)}" data-title="${(v.title||v.category||'').replace(/"/g,'&quot;')}" data-kind="site" style="left:auto; right:10px;">🔖</button>
         <video id="siteVideo-${i}" src="${v.src}" ${v.poster?`poster="${v.poster}"`:''} controls preload="metadata"></video>
+        ${!free ? `
         <div class="paywall-overlay" id="paywallOverlay-${i}">
           <p>${T('paywallMsg')}</p>
           <div class="paywall-options" id="paywallOptions-${i}">
@@ -1243,25 +1356,30 @@ function renderSiteVideos(){
             <button class="paywall-btn" data-gate="${i}" data-kind="both">${T('bothLabel')}<small>${v.priceBoth||0} ${T('madCurrency')} (~€${madToEur(v.priceBoth||0)})</small></button>
           </div>
           <div class="paypal-panel" id="paypalPanel-${i}"></div>
-        </div>
+        </div>` : ''}
       </div>
       <div class="ep-info"><h4>${v.title}</h4></div>
       <div class="rating-widget" id="rating-siteVideo-${i}"></div>
-      ${v.previewSeconds > 0 ? `
+      ${!free && v.previewSeconds > 0 ? `
       <div class="download-btn-row">
         <button class="download-gate-btn" data-download-gate="${i}">⬇ ${T('downloadBtnLabel')} (${v.priceDownload||0} ${T('madCurrency')})</button>
+      </div>` : ''}
+      ${free ? `
+      <div class="download-btn-row">
+        <button class="download-gate-btn" data-free-download="${i}">⬇ ${T('freeDownloadBtnLabel')}</button>
       </div>` : ''}
     </div>`;
   }).join('');
 
   withSrc.forEach((v, i) => {
     const videoKey = v.title || v.src;
+    const free = v.free === true;
     const videoEl = document.getElementById(`siteVideo-${i}`);
     const overlay = document.getElementById(`paywallOverlay-${i}`);
     if(!videoEl) return;
     enableResume(videoEl, videoKey);
     renderRatingWidget(`rating-siteVideo-${i}`, videoKey);
-    if(v.previewSeconds > 0 && !hasAccess(videoKey, 'watch')){
+    if(!free && v.previewSeconds > 0 && !hasAccess(videoKey, 'watch')){
       videoEl.addEventListener('timeupdate', () => {
         if(videoEl.currentTime >= v.previewSeconds && !hasAccess(videoKey, 'watch')){
           videoEl.pause();
@@ -1269,6 +1387,13 @@ function renderSiteVideos(){
         }
       });
     }
+  });
+
+  grid.querySelectorAll('[data-free-download]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const v = withSrc[Number(btn.dataset.freeDownload)];
+      triggerDownload(v);
+    });
   });
 
   grid.querySelectorAll('[data-watch-later]').forEach(btn => {
@@ -1523,522 +1648,12 @@ document.querySelector('[data-page="episodes"]').addEventListener('click', () =>
    ============================================================ */
 const seriesList = [
   {
-   name: "حكاية قبل الإفطار",
-
-
-
-
-
-
-
-    freeCount:20,
-
-
-
-
-
-
-
-    description:"حكاية قبل الإفطار هو بودكاست رمضاني هادئ، يقدّم قصصًا واقعية وإنسانية قصيرة، تُروى بأسلوب بسيط وعميق، وتُلامس القلوب في الدقائق التي تسبق أذان المغرب. في كل حلقة، نعيش حكاية مختلفة: موقف عابر، فعل خير خفي، صبر في لحظة ضعف، أو عِبرة وُلدت من الجوع والتعب… قصص تُذكّرنا بأن الخير لا يحتاج ضجيجًا، وأن الله حاضر في التفاصيل الصغيرة. 🎧 هذا البودكاست موجّه لكل من: يبحث عن لحظة سكينة قبل الإفطار يحب القصص الهادئة ذات المعنى يريد إنهاء يوم الصيام بكلمة طيبة وعِبرة صادقة 📌 مميزات البرنامج: أسلوب سرد هادئ مناسب للـ Podcast & Voice-over قصص قصيرة مؤثرة مستوحاة من الواقع محتوى نظيف، إنساني، وعائلي مثالي للاستماع قبل الإفطار أو في وقت هدوء 🕯️ حكاية قبل الإفطار ليست مجرد قصص… بل لحظات تأمل، ورسائل أمل، وذكرى جميلة من رمضان.",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    name: "اسم السلسلة الأولى",
+    description: "وصف قصير للسلسلة (اختياري)",
+    freeCount: 1,
     items: [
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 1.mp4", poster: "حكاية قبل الافطار (6).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 1",  previewSeconds: 30, priceWatch: 10, priceDownload: 20, priceBoth: 30 },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 2.mp4", poster: "images/حكاية قبل الافطار (7).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 2" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 3.mp4", poster: "حكاية قبل الافطار (8).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 3" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 4.mp4", poster: "حكاية قبل الافطار (9).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 4" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 5.mp4", poster: "حكاية قبل الافطار (10).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 5" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 6.mp4", poster: "حكاية قبل الافطار (11).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 6" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 7.mp4", poster: "حكاية قبل الافطار (12).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 7" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 8.mp4", poster: "حكاية قبل الافطار (13).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 8" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 9.mp4", poster: "حكاية قبل الافطار (14).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 9" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "videos/الحلقة 10.mp4", poster: "حكاية قبل الافطار (15).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 10" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 11.mp4", poster: "حكاية قبل الافطار (16).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 11" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 12.mp4", poster: "حكاية قبل الافطار (17).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 12" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 13.mp4", poster: "حكاية قبل الافطار (18).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 13" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 14.mp4", poster: "حكاية قبل الافطار (19).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 14" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 15.mp4", poster: "حكاية قبل الافطار (20).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 15" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 16.mp4", poster: "حكاية قبل الافطار (25).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 16" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 17.mp4", poster: "حكاية قبل الافطار (26).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 17" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 18.mp4", poster: "حكاية قبل الافطار (27).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 18" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 19.mp4", poster: "حكاية قبل الافطار (28).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 19" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 20.mp4", poster: "حكاية قبل الافطار (29).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 20" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 21.mp4", poster: "حكاية قبل الافطار (30).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 21" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 22.mp4", poster: "حكاية قبل الافطار (31).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 22" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 23.mp4", poster: "حكاية قبل الافطار (32).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 23" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 24.mp4", poster: "حكاية قبل الافطار (33).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 24" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 25.mp4", poster: "حكاية قبل الافطار (34).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 25" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 26.mp4", poster: "حكاية قبل الافطار (35).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 26" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 27.mp4", poster: "حكاية قبل الافطار (36).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 27" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 28.mp4", poster: "حكاية قبل الافطار (37).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 28" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 29.mp4", poster: "حكاية قبل الافطار (38).png", title: "حكاية قبل الإفطار | الحلقـــــــــة 29" },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-      { src: "الحلقة 30.mp4", poster: "حكاية قبل الافطار (39).png", title: "حكاية قبل الإفطار | الحلقـــــــــةالأخيرة",  },
-
-
-
+      { src: "", poster: "", title: "الجزء 1", releaseAt: "" },
+      { src: "", poster: "", title: "الجزء 2", releaseAt: "", previewSeconds: 20, priceWatch: 10, priceDownload: 20, priceBoth: 30 },
     ]
   },
   // زيد سلاسل أخرى هنا بنفس الشكل:
@@ -2284,13 +1899,21 @@ function goToPage(name){
   transitionEl.classList.add('show');
   setTimeout(() => {
     pages.forEach(p => p.classList.toggle('active', p.id === 'page-' + name));
-    document.querySelectorAll('.nav-links a').forEach(a => a.classList.toggle('active', a.dataset.page === name));
+    document.querySelectorAll('.nav-links a, #mobileMenu a').forEach(a => a.classList.toggle('active', a.dataset.page === name));
+    document.getElementById('mobileMenu').classList.remove('show');
     window.scrollTo(0,0);
     if(name === 'home'){ requestAnimationFrame(() => { buildPath(); updatePlane(); }); }
     requestAnimationFrame(() => transitionEl.classList.remove('show'));
   }, 220);
 }
 navLinks.forEach(el => el.addEventListener('click', (e) => { e.preventDefault(); goToPage(el.dataset.page); }));
+
+document.getElementById('hamburgerBtn').addEventListener('click', () => {
+  document.getElementById('mobileMenu').classList.add('show');
+});
+document.getElementById('mobileMenuClose').addEventListener('click', () => {
+  document.getElementById('mobileMenu').classList.remove('show');
+});
 
 document.addEventListener('keydown', (e) => {
   if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
@@ -2540,6 +2163,7 @@ applyLanguage(savedLang);
      المفاتيح ديال Firebase ديالك مزادين هنا. إلا بغيتي تبدل المشروع،
      بدل الأرقام فـ firebaseConfig بالأرقام الجداد.
      ============================================================ -->
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 <script src="https://www.paypal.com/sdk/js?client-id=AVpG0E5KgT9uBqgULvnzE9cO9fhXkreVPl_JcRKD-C0EbaFJK9EOPq1_UNYap7yp0cW-X2HctpTC8-0K&currency=EUR"></script>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script type="module">
