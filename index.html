@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>رؤيـة أنس | Anass Vision</title>
 <meta name="description" content="رؤيـة أنس: قناة تأخذكم في رحلة عبر القصص والتاريخ والأفكار المتنوعة.">
-<link rel="icon" type="image/png" sizes="32x32" href="3.png">
-<link rel="icon" type="image/png" sizes="16x16" href="3.png">
-<link rel="apple-touch-icon" sizes="180x180" href="3.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Cairo:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
@@ -818,7 +815,7 @@ const episodes = [
    priceBoth      : ثمن مشاهدة + تحميل بجوج
    ============================================================ */
 const siteVideos = [
-  { src: "", poster: "2.jpg", title: "", category: "حصري", previewSeconds: 30, priceWatch: 10, priceDownload: 20, priceBoth: 30 },
+  { src: "episode1.mp4", poster: "2.jpg", title: "", category: "حصري", free:true},
   // مثال فيديو مجاني بالكامل:
   // { src: "videos/free-clip.mp4", poster: "", title: "فيديو مجاني", category: "مجاني", free: true },
 ];
@@ -1185,7 +1182,7 @@ async function renderRatingWidget(containerId, videoKey){
    ffmpeg.wasm. أول مرة كتحمل ~25 ميغا، والمعالجة كتاخد وقت.
    ============================================================ */
 const WATERMARK_TEXT = "Anass Vision";
-const WATERMARK_FONT_URL = "https://cdn.jsdelivr.net/gh/google/fonts/apache/roboto/Roboto-Bold.ttf";
+const WATERMARK_FONT_URL = "https://cdn.jsdelivr.net/gh/google/fonts@main/apache/roboto/Roboto-Bold.ttf";
 let _ffmpegInstance = null;
 let _ffmpegLoading = null;
 
@@ -1211,7 +1208,10 @@ async function getFfmpeg(){
   if(_ffmpegLoading) return _ffmpegLoading;
   _ffmpegLoading = (async () => {
     const { createFFmpeg } = FFmpeg;
-    const ff = createFFmpeg({ log: false });
+    const ff = createFFmpeg({
+      log: true,
+      corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+    });
     await ff.load();
     _ffmpegInstance = ff;
     return ff;
@@ -1260,7 +1260,8 @@ async function triggerDownload(video){
     hideDownloadToast();
   }catch(err){
     console.warn('تعذرت معالجة العلامة المائية، كيتحمل الملف الأصلي.', err);
-    hideDownloadToast();
+    showDownloadToast(`⚠️ ماخدماتش العلامة المائية (${err.message || err}). كيتحمل الملف العادي...`);
+    setTimeout(hideDownloadToast, 4000);
     downloadPlain(video);
   }
 }
